@@ -185,6 +185,7 @@ async def test_get_raises_connection_error_on_client_error():
 
 EVENTS_URL = f"https://{SCHOOL}.edookit.net/timetable/upcoming"
 PAYMENTS_URL = f"https://{SCHOOL}.edookit.net/payments/"
+EXAMS_URL = f"https://{SCHOOL}.edookit.net/exams/"
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
@@ -198,6 +199,16 @@ async def test_get_events_parses_the_upcoming_page():
     events = await client.get_events()
 
     assert [e.id for e in events] == ["5001", "5002", "5003", "5004", "5005"]
+
+
+@pytest.mark.asyncio
+async def test_get_exams_parses_the_exams_page():
+    body = (FIXTURES / "exams_structure.html").read_text()
+    client = EdookitClient(
+        SESSION, http=FakeClientSession([("GET", EXAMS_URL, ok(EXAMS_URL, body=body))])
+    )
+
+    assert [e.id for e in await client.get_exams()] == [9003, 9002, 9001]
 
 
 @pytest.mark.asyncio

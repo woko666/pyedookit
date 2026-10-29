@@ -10,6 +10,7 @@ from .exceptions import (
 from .models import (
     PORTAL_TZ,
     BodyNode,
+    Exam,
     Grade,
     Grades,
     Lesson,
@@ -36,6 +37,7 @@ __all__ = [
     "EdookitClient",
     "EdookitConnectionError",
     "EdookitError",
+    "Exam",
     "Grade",
     "Grades",
     "Lesson",
