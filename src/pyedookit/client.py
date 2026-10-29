@@ -10,6 +10,7 @@ import aiohttp
 from . import auth, transport
 from .exceptions import ParseError, SessionExpired
 from .models import (
+    Assignment,
     Exam,
     Grades,
     Lesson,
@@ -20,6 +21,7 @@ from .models import (
     Term,
     TimetableWeek,
 )
+from .parsers.assignments import parse_assignments
 from .parsers.events import parse_events
 from .parsers.exams import parse_exams
 from .parsers.grades import parse_grade_listing, parse_subjects
@@ -45,9 +47,9 @@ _MESSAGE_PATH = "/messages/detail"
 _GRADES_PATH = "/evaluation/listing"
 _SUBJECTS_PATH = "/evaluation/"
 _EXAMS_PATH = "/exams/"
+_ASSIGNMENTS_PATH = "/assignments/"
 
 CAPTURE_PAGES: dict[str, str] = {
-    "assignments": "/assignments/",
     "consents": "/consents/",
     # Term marks (orange on the portal) have no known markup until published.
     "evaluation_overall": "/evaluation/overall",
@@ -160,6 +162,10 @@ class EdookitClient:
     async def get_exams(self) -> list[Exam]:
         """Upcoming, today's and recent exams; older ones are only in the portal's archive."""
         return await asyncio.to_thread(parse_exams, await self._get(_EXAMS_PATH))
+
+    async def get_assignments(self) -> list[Assignment]:
+        """Today's, upcoming and recent homework; older ones are only in the portal's archive."""
+        return await asyncio.to_thread(parse_assignments, await self._get(_ASSIGNMENTS_PATH))
 
     async def get_message(self, message_id: int) -> Message:
         """One message in full; fetching it marks the message read on the portal."""

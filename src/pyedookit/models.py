@@ -193,3 +193,26 @@ class Exam:
     @property
     def short(self) -> str:
         return _short(self.course_code, self.subject) or self.subject
+
+
+@dataclass(frozen=True, slots=True)
+class Assignment:
+    """Homework on Domácí úkoly (`/assignments/`)."""
+
+    id: int
+    # "Čj - 1.A (Český jazyk) - Domácí úkol" on a real portal.
+    title: str
+    due: datetime
+    subject: str
+    created_by: str
+    created: datetime
+    unread: bool
+    # Marked done by the family on the portal, not graded by the teacher.
+    done: bool
+    description: str | None = None
+    course_id: int | None = None
+    course_code: str | None = None
+
+    @property
+    def short(self) -> str:
+        return _short(self.course_code, self.subject) or self.subject

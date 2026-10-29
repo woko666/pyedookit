@@ -1,0 +1,183 @@
+<!--
+Anonymised from a real /assignments/ capture, trimmed to three of its six
+rows. The structure is as captured: the three h2 sections (today's with the
+empty-grid message, upcoming, recent), the gridLabel header row, the
+ul.table_row rows with an assignment=<id> onclick, a course<id> class and
+an "incomplete" class while not marked done, the c1/c2/c3/c4 columns (c3
+holds a checkbox, or the finished marker once done), and the "unread" link
+class. Names, the class, ids, course ids and descriptions are placeholders.
+Every row was unread in the capture; a filled today's grid and attachments
+haven't been seen.
+-->
+<html><body>
+<section class="content">
+<div>
+<div id="snippet-assignmentsGrid-flashes"></div>
+<div class="assignmentsContainer">
+<form action="/assignments/" id="frm-assignmentsGrid-finishAssignment" method="post">
+<div class="mark_assignments_as_finished_container">
+<input class="finish_selected_assignments primary" name="selected" type="submit" value="Označit vybrané jako hotové"/>
+</div>
+<h2 class="heading">Úkoly na dnešek</h2>
+<div>
+<div class="boxes1">
+<p><em>Žádné úkoly</em></p>
+<div class="cleaner"></div></div>
+</div>
+<h2 class="heading">Nadcházející úkoly</h2>
+<div>
+<div class="boxes1">
+<p id="noSuchSelector1"><em>Žádné úkoly</em></p>
+<div class="homeworks_table spacy-grid cssHack-no-bg" id="shownSelector1">
+<div class="gridLabel cssHack-box" id="gridLabel">
+<ul class="unclickable gridLabel table_row">
+<li class="c1">
+<h3 class="grid-label">Termín odevzdání</h3>
+</li>
+<li class="c2">
+<h3 class="grid-label">Popis</h3>
+</li>
+<li class="c3">
+<h3 class="grid-label">Postup</h3>
+</li>
+<li class="c4">
+<h3 class="grid-label">Vytvořeno</h3>
+</li>
+</ul>
+</div>
+<div class="cssHack-box">
+<ul class="anyCourse course501 table_row" onclick="window.location.href = '/assignments/detail?assignment=9101'">
+<li class="c1">
+<h3 class="responsive-label">Termín odevzdání</h3>
+<p><b>do 2. 11., <span>8:55</span></b></p>
+<p>
+                        Český jazyk<span class="link_info">Čj - 1.A</span>
+</p>
+</li>
+<li class="c2">
+<h3 class="responsive-label">Popis</h3>
+<p>
+</p><div class="bold">
+<a class="unread" href="/assignments/detail?assignment=9101">
+                    Čj - 1.A (Český jazyk) - Domácí úkol
+                </a>
+</div>
+<p></p>
+<p>Naučit se vyjmenovaná slova po B</p>
+</li>
+<li class="c3">
+<h3 class="responsive-label">Postup</h3>
+<div class="finished_assignment"></div>
+<input class="assignments_submit" name="assignments[u9101]" type="submit" value="Zrušit označení"/>
+</li>
+<li class="c4">
+<h3 class="responsive-label">Vytvořeno</h3>
+<div class="smaller">
+<p><b>Jana Nováková</b></p>
+<p>Po 19. 10. 2026, <span class="date_time">9:30</span></p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="cleaner"></div></div>
+</div>
+<h2 class="heading">Nedávné úkoly</h2>
+<div>
+<div class="boxes1">
+<p id="noSuchSelector3"><em>Žádné úkoly</em></p>
+<div class="homeworks_table spacy-grid cssHack-no-bg" id="shownSelector3">
+<div class="gridLabel cssHack-box" id="gridLabel">
+<ul class="unclickable gridLabel table_row">
+<li class="c1">
+<h3 class="grid-label">Termín odevzdání</h3>
+</li>
+<li class="c2">
+<h3 class="grid-label">Popis</h3>
+</li>
+<li class="c3">
+<h3 class="grid-label">Postup</h3>
+</li>
+<li class="c4">
+<h3 class="grid-label">Vytvořeno</h3>
+</li>
+</ul>
+</div>
+<div class="cssHack-box">
+<ul class="anyCourse course502 incomplete table_row" onclick="window.location.href = '/assignments/detail?assignment=9102'">
+<li class="c1">
+<h3 class="responsive-label">Termín odevzdání</h3>
+<p><b>do 21. 10., <span>8:55</span></b></p>
+<p>
+                        Matematika<span class="link_info">M T - 1.A</span>
+</p>
+</li>
+<li class="c2">
+<h3 class="responsive-label">Popis</h3>
+<p>
+</p><div class="bold">
+<a class="unread" href="/assignments/detail?assignment=9102">
+                    M T - 1.A (Matematika) - Domácí úkol
+                </a>
+</div>
+<p></p>
+<p>Opakovat násobilku</p>
+</li>
+<li class="c3">
+<h3 class="responsive-label">Postup</h3>
+                    0 %
+                    <label for="frm-assignmentsGrid-finishAssignment-assignments-9102"><input class="assignments_checkbox" id="frm-assignmentsGrid-finishAssignment-assignments-9102" name="assignments[9102]" type="checkbox"/></label><input class="assignments_hidden" name="assignments[h9102]" type="hidden" value=""/>
+<br/>
+<input class="assignments_submit" name="assignments[s9102]" type="submit" value="Označit jako hotové"/>
+</li>
+<li class="c4">
+<h3 class="responsive-label">Vytvořeno</h3>
+<div class="smaller">
+<p><b>Jana Nováková</b></p>
+<p>Út 20. 10. 2026, <span class="date_time">10:19</span></p>
+</div>
+</li>
+</ul>
+</div>
+<div class="cssHack-box">
+<ul class="anyCourse course502 table_row" onclick="window.location.href = '/assignments/detail?assignment=9103'">
+<li class="c1">
+<h3 class="responsive-label">Termín odevzdání</h3>
+<p><b>do 2. 10., <span>8:00</span></b></p>
+<p>
+                        Matematika<span class="link_info">M T - 1.A</span>
+</p>
+</li>
+<li class="c2">
+<h3 class="responsive-label">Popis</h3>
+<p>
+</p><div class="bold">
+<a class="unread" href="/assignments/detail?assignment=9103">
+                    M T - 1.A (Matematika) - Domácí úkol
+                </a>
+</div>
+<p></p>
+<p></p>
+</li>
+<li class="c3">
+<h3 class="responsive-label">Postup</h3>
+<div class="finished_assignment"></div>
+<input class="assignments_submit" name="assignments[u9103]" type="submit" value="Zrušit označení"/>
+</li>
+<li class="c4">
+<h3 class="responsive-label">Vytvořeno</h3>
+<div class="smaller">
+<p><b>Jana Nováková</b></p>
+<p>Čt 1. 10. 2026, <span class="date_time">13:40</span></p>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="cleaner"></div></div>
+</div>
+<input name="_do" type="hidden" value="assignmentsGrid-finishAssignment-submit"/></form>
+</div>
+</div>
+<p>Všechny minulé úkoly najdete v <a href="/assignments/archive">archivu</a>.</p>
+</section></body></html>
