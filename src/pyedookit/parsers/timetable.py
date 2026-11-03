@@ -23,6 +23,8 @@ _NOTE_PREFIX = "Učivo:"
 # there is no class or attribute for it (seen on 30 changed and 136
 # cancelled lessons over ten weeks of a real portal, never on a regular one).
 _CHANGED_BORDER_RE = re.compile(r"border:\s*1px solid #ea8400", re.IGNORECASE)
+# One per student on the account, each directly after a heading with the name.
+_STUDENT_SECTION = 'div[id^="snippet-familyTimetable-personTimetable-"]'
 # An event tile's tooltip spans the whole day when the event covers it.
 _ALL_DAY = (time(0, 0), time(23, 59))
 
@@ -53,10 +55,13 @@ def parse_timetable(html: str, today: date | None = None) -> list[Lesson]:
     the regular timetable - another teacher, room or subject - only gets an
     orange border (confirmed). `is_changed` is set for both, `is_cancelled`
     only for the first.
+
+    Each student on the account has their own section under a heading with
+    their name, which goes in `student` (confirmed); a page without those
+    sections leaves it `None`.
     """
     soup = BeautifulSoup(html, "lxml")
-    blocks = soup.select("div.lesson-info")
-    if not blocks:
+    if soup.select_one("div.lesson-info") is None:
         # A week without lessons (summer holidays, confirmed) still renders
         # its empty grid; a page without one isn't a timetable.
         if soup.select_one("div.timetable-container") is None:
@@ -65,19 +70,20 @@ def parse_timetable(html: str, today: date | None = None) -> list[Lesson]:
 
     if today is None:
         today = portal_today()
-    tiles = {
-        lesson_id: tile
-        for tag, tile in _read_tiles(soup)
-        if (lesson_id := _tile_lesson_id(tag)) is not None
-    }
     lessons = []
-    for block in blocks:
-        lesson_id = str(block.get("id") or "").removeprefix("lesson-info-")
-        lesson = _parse_lesson_info(block, tiles.get(lesson_id), today)
-        if lesson is None:
-            _LOGGER.warning("skipping unparseable lesson block %s", block.get("id"))
-        else:
-            lessons.append(lesson)
+    for student, section in _student_sections(soup):
+        tiles = {
+            lesson_id: tile
+            for tag, tile in _read_tiles(section)
+            if (lesson_id := _tile_lesson_id(tag)) is not None
+        }
+        for block in section.select("div.lesson-info"):
+            lesson_id = str(block.get("id") or "").removeprefix("lesson-info-")
+            lesson = _parse_lesson_info(block, tiles.get(lesson_id), today, student)
+            if lesson is None:
+                _LOGGER.warning("skipping unparseable lesson block %s", block.get("id"))
+            else:
+                lessons.append(lesson)
     return lessons
 
 
@@ -91,35 +97,38 @@ def parse_timetable_events(html: str) -> list[SchoolEvent]:
     tile. Each tile gives one single-day event, as the grid draws it: a
     multi-day event comes back once per day under the same id. A whole day
     gets `date` start and end, otherwise they are times on that day.
+
+    An event that concerns several students is drawn in each one's section
+    (confirmed), and comes back once per student with `student` set.
     """
     soup = BeautifulSoup(html, "lxml")
-    events: dict[tuple[str, date], SchoolEvent] = {}
-    for tag, tile in _read_tiles(soup):
-        if "event" not in (tag.get("class") or []):
-            continue
-        match = _EVENT_ID_RE.search(str(tag.get("href") or ""))
-        if match is None:
-            _LOGGER.warning("skipping event tile without an event link %s", tag.get("id"))
-            continue
-        # The same event can be drawn more than once on a day (seen on a
-        # real page); keep the first.
-        key = (match.group(1), tile.day)
-        if key in events:
-            continue
-        heading = tag.select_one(".row b, .lessonRow b")
-        start: datetime | date
-        end: datetime | date
-        if (tile.start, tile.end) == _ALL_DAY:
-            start = end = tile.day
-        else:
-            start = datetime.combine(tile.day, tile.start, tzinfo=PORTAL_TZ)
-            end = datetime.combine(tile.day, tile.end, tzinfo=PORTAL_TZ)
-        events[key] = SchoolEvent(
-            id=key[0],
-            title=heading.get_text(" ", strip=True) if heading else "",
-            start=start,
-            end=end,
-        )
+    events: dict[tuple[str | None, str, date], SchoolEvent] = {}
+    for student, section in _student_sections(soup):
+        for tag, tile in _read_tiles(section):
+            if "event" not in (tag.get("class") or []):
+                continue
+            match = _EVENT_ID_RE.search(str(tag.get("href") or ""))
+            if match is None:
+                _LOGGER.warning("skipping event tile without an event link %s", tag.get("id"))
+                continue
+            key = (student, match.group(1), tile.day)
+            if key in events:
+                continue
+            heading = tag.select_one(".row b, .lessonRow b")
+            start: datetime | date
+            end: datetime | date
+            if (tile.start, tile.end) == _ALL_DAY:
+                start = end = tile.day
+            else:
+                start = datetime.combine(tile.day, tile.start, tzinfo=PORTAL_TZ)
+                end = datetime.combine(tile.day, tile.end, tzinfo=PORTAL_TZ)
+            events[key] = SchoolEvent(
+                id=match.group(1),
+                title=heading.get_text(" ", strip=True) if heading else "",
+                start=start,
+                end=end,
+                student=student,
+            )
     return sorted(events.values(), key=lambda event: _event_day(event.start))
 
 
@@ -132,6 +141,9 @@ def parse_periods(html: str) -> list[Period]:
 
     Each cell carries a title like "1\xa008:00–08:45 " (number, non-breaking
     space, time range). Returns an empty list when the page has no header.
+
+    The students' grids are merged: each draws only the periods its week
+    needs, and a period's times never differed between them on a real portal.
     """
     soup = BeautifulSoup(html, "lxml")
     periods: dict[int, Period] = {}
@@ -172,10 +184,27 @@ class _Tile:
     changed: bool
 
 
-def _read_tiles(soup: BeautifulSoup) -> list[tuple[Tag, _Tile]]:
-    tooltips = {str(t.get("id")): t for t in soup.select("div.hoverLesson[id]")}
+def _student_sections(soup: BeautifulSoup) -> list[tuple[str | None, Tag]]:
+    sections = soup.select(_STUDENT_SECTION)
+    if not sections:
+        return [(None, soup)]
+    return [(_student_name(section), section) for section in sections]
+
+
+def _student_name(section: Tag) -> str | None:
+    # Only the immediate sibling: a section missing its heading mustn't take
+    # the previous student's. The class and the PDF link are child tags of
+    # the heading, so its own strings are just the name.
+    heading = section.find_previous_sibling()
+    if heading is None or heading.name != "h2":
+        return None
+    return " ".join(" ".join(heading.find_all(string=True, recursive=False)).split()) or None
+
+
+def _read_tiles(root: Tag) -> list[tuple[Tag, _Tile]]:
+    tooltips = {str(t.get("id")): t for t in root.select("div.hoverLesson[id]")}
     tiles = []
-    for tag in soup.select("a.lesson[id]"):
+    for tag in root.select("a.lesson[id]"):
         tooltip = tooltips.get(str(tag.get("id")).replace("boxId", "longDesc"))
         tile = _parse_tile(tag, tooltip)
         if tile is None:
@@ -214,7 +243,9 @@ def _tile_lesson_id(tag: Tag) -> str | None:
     return lesson_id or None
 
 
-def _parse_lesson_info(block: Tag, tile: _Tile | None, today: date) -> Lesson | None:
+def _parse_lesson_info(
+    block: Tag, tile: _Tile | None, today: date, student: str | None = None
+) -> Lesson | None:
     # The date/time field comes first; it is empty on a cancelled lesson.
     fields = block.find_all("div", recursive=False)
     if not fields:
@@ -258,4 +289,5 @@ def _parse_lesson_info(block: Tag, tile: _Tile | None, today: date) -> Lesson | 
         is_cancelled=tile.cancelled if tile is not None else False,
         note=note,
         code=code.strip() or None,
+        student=student,
     )

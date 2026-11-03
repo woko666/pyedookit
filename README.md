@@ -38,8 +38,8 @@ asyncio.run(main())
 
 | Call | Returns |
 |---|---|
-| `get_timetable(week_offset=0)` | one week's `Lesson`s, times in `PORTAL_TZ` (Europe/Prague); `is_changed` for a substitution or other change, `is_cancelled` for a lesson that won't take place ("Zrušeno", or "Událost" when an event replaces it) |
-| `get_timetable_week(week_offset=0)` | a `TimetableWeek`: `lessons`, the bell-schedule `periods`, and the week's `events` (days off such as "Ředitelské volno", or timed ones, as `SchoolEvent`s, one per day as drawn, so a multi-day event repeats under the same `id`); offset `1` is next week, `-1` last week |
+| `get_timetable(week_offset=0)` | one week's `Lesson`s, times in `PORTAL_TZ` (Europe/Prague); `is_changed` for a substitution or other change, `is_cancelled` for a lesson that won't take place ("Zrušeno", or "Událost" when an event replaces it); `student` is the name heading that student's section of the page, `None` if the page has no such sections |
+| `get_timetable_week(week_offset=0)` | a `TimetableWeek`: `lessons`, the bell-schedule `periods`, and the week's `events` (days off such as "Ředitelské volno", or timed ones, as `SchoolEvent`s, one per day as drawn, so a multi-day event repeats under the same `id`, as does one shared by several students, each with their `student`); offset `1` is next week, `-1` last week |
 | `get_events()` | upcoming `SchoolEvent`s; all-day events have `date` start/end, end inclusive |
 | `get_payments()` | `Payments` totals and requests, amounts as `Decimal` |
 | `get_inbox()` | the `MessageSummary`s in Schránka, newest first: subject, sender, sent time, preview, `unread` |
@@ -94,6 +94,11 @@ hand, and a real jar would resend them.
   its orange border only; what changed (teacher, room, subject) has to be
   read from its fields. A timed event spanning several days hasn't been
   seen.
+- **Only one student's lessons have been seen.** On the two-student account
+  checked, the second student's grid had events but no lessons, so their
+  lessons are assumed to use the same markup. An account with a single
+  student hasn't been seen either; if it has no named section, `student` is
+  `None`.
 - **Another week is two requests.** The portal stores the shown week in the
   session and moves it relative to where it is, so `week_offset` other than
   `0` first resets to the current week.

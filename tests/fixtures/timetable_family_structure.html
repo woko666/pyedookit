@@ -1,0 +1,132 @@
+<!--
+Trimmed from real captures of a two-student account; names, class, ids and
+event titles replaced, inline styles dropped. Seen on the real portal:
+
+- h2.heading (name, span.class-name, a.print-pdf) directly before each
+  student's snippet-familyTimetable-personTimetable-{id} section, with a
+  div.cleaner closing the section;
+- each section holding its own lesson-info blocks and timetable-container;
+- a student with event tiles and no lessons (Eliška Nováková here);
+- one event drawn in both sections on the same day (id 5001).
+
+A guess: lessons in the second section. That student had none on the real
+account, so its lesson's markup is copied from the first section's. Lesson
+900001 appearing in both sections, as it would for siblings in one group, is
+a guess too: it never happened in the captures.
+-->
+<section class="content">
+  <h2>Rozvrh žáků</h2>
+  <div id="snippet-familyTimetable-timetableContainer">
+    <h2 class="heading">
+      Jan Karel Novák
+
+      <span class="class-name">1.A</span>
+      <a class="print-pdf" href="/timetable/pdf?personId=101" target="_blank" title="Stáhnout jako PDF">Tisk do PDF</a>
+    </h2>
+    <div id="snippet-familyTimetable-personTimetable-101">
+      <div class="excuse-form">
+        <div class="lesson-info" style="display:none" id="lesson-info-900001">
+          <h3 class="attendance-heading">Informace o hodině</h3>
+          <div></div>
+          <div>Čj - 1.A</div>
+          <div>Český jazyk</div>
+          <div>Svobodová P.</div>
+          <div>1.A</div>
+        </div>
+      </div>
+      <div class="timetable">
+        <div class="timetable-container" id="tt1">
+          <div class="lessons-content">
+            <div class="period-time" title="1&nbsp;08:00&ndash;08:45 "></div>
+            <div class="period-time" title="2&nbsp;08:55&ndash;09:40 "></div>
+          </div>
+          <div class="lessonsBox" id="tt1lessonsBox">
+            <div>
+              <a class="lesson defaultLesson" id="tt1boxId0" name="900001">
+                <span data-day="2026_10_19" data-lesson-id="900001"></span>
+                <div><div class="lessonRow"><span class="fontsize"><b>Čj</b></span></div></div>
+              </a>
+              <div class="hoverLesson" id="tt1longDesc0" style="display:none;">
+                <div>Čj (Český jazyk)</div>
+                <div>Po 19. 10.
+08:00&ndash;08:45</div>
+              </div>
+            </div>
+            <div>
+              <a class="lesson event" href="/timetable/detail?event=5001" id="tt1boxId1">
+                <span data-day="2026_10_20" data-lesson-id=""></span>
+                <div class="row"><b>Ředitelské volno</b></div>
+              </a>
+              <div class="hoverLesson" id="tt1longDesc1" style="display:none;">
+                <div>Ředitelské volno</div>
+                <div>Út 20. 10.
+00:00&ndash;23:59</div>
+              </div>
+            </div>
+            <div>
+              <a class="lesson event" href="/timetable/detail?event=5002" id="tt1boxId2">
+                <span data-day="2026_10_21" data-lesson-id=""></span>
+                <div class="lessonRow"><b>Výlet</b></div>
+              </a>
+              <div class="hoverLesson" id="tt1longDesc2" style="display:none;">
+                <div>St 21. 10.
+08:00&ndash;11:59</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cleaner"></div>
+    <h2 class="heading">
+      Eliška Nováková
+
+      <span class="class-name">Ježci</span>
+      <a class="print-pdf" href="/timetable/pdf?personId=102" target="_blank" title="Stáhnout jako PDF">Tisk do PDF</a>
+    </h2>
+    <div id="snippet-familyTimetable-personTimetable-102">
+      <div class="excuse-form">
+        <div class="lesson-info" style="display:none" id="lesson-info-900001">
+          <h3 class="attendance-heading">Informace o hodině</h3>
+          <div></div>
+          <div>Čj - 1.A</div>
+          <div>Český jazyk</div>
+          <div>Svobodová P.</div>
+          <div>1.A</div>
+        </div>
+      </div>
+      <div class="timetable">
+        <div class="timetable-container" id="tt2">
+          <div class="lessons-content">
+            <div class="period-time" title="2&nbsp;08:55&ndash;09:40 "></div>
+          </div>
+          <div class="lessonsBox" id="tt2lessonsBox">
+            <div>
+              <a class="lesson defaultLesson" id="tt2boxId0" name="900001">
+                <span data-day="2026_10_19" data-lesson-id="900001"></span>
+                <div><div class="lessonRow"><span class="fontsize"><b>Čj</b></span></div></div>
+              </a>
+              <div class="hoverLesson" id="tt2longDesc0" style="display:none;">
+                <div>Čj (Český jazyk)</div>
+                <div>Po 19. 10.
+08:55&ndash;09:40</div>
+              </div>
+            </div>
+            <div>
+              <a class="lesson event" href="/timetable/detail?event=5001" id="tt2boxId1">
+                <span data-day="2026_10_20" data-lesson-id=""></span>
+                <div class="row"><b>Ředitelské volno</b></div>
+              </a>
+              <div class="hoverLesson" id="tt2longDesc1" style="display:none;">
+                <div>Ředitelské volno</div>
+                <div>Út 20. 10.
+00:00&ndash;23:59</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cleaner"></div>
+  </div>
+</section>
