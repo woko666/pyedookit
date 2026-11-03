@@ -109,8 +109,8 @@ _NUMERIC_MARKS = {"1", "2", "3", "4", "5"}
 
 
 def _short(code: str | None, name: str | None) -> str | None:
-    """The portal's subject abbreviation: "Aj 2 - I.B" → "Aj"."""
-    return code.split()[0] if code and code.strip() else name
+    """The portal's subject abbreviation: "Aj 2 - I.B" → "Aj", "Aj2- 1.A" → "Aj2"."""
+    return code.split()[0].rstrip("-") if code and code.strip() else name
 
 
 @dataclass(frozen=True, slots=True)
@@ -169,3 +169,50 @@ class Grades:
             total += value * weight
             weights += weight
         return total / weights if weights else None
+
+
+@dataclass(frozen=True, slots=True)
+class Exam:
+    """A test or oral exam announced on Písemky, zkoušení (`/exams/`)."""
+
+    id: int
+    title: str
+    start: datetime
+    end: datetime
+    subject: str
+    # "Malá písemka" and "Písemná práce" on a real portal.
+    kind: str
+    category: str
+    created_by: str
+    created: datetime
+    unread: bool
+    description: str | None = None
+    course_id: int | None = None
+    course_code: str | None = None
+
+    @property
+    def short(self) -> str:
+        return _short(self.course_code, self.subject) or self.subject
+
+
+@dataclass(frozen=True, slots=True)
+class Assignment:
+    """Homework on Domácí úkoly (`/assignments/`)."""
+
+    id: int
+    # "Čj - 1.A (Český jazyk) - Domácí úkol" on a real portal.
+    title: str
+    due: datetime
+    subject: str
+    created_by: str
+    created: datetime
+    unread: bool
+    # Marked done by the family on the portal, not graded by the teacher.
+    done: bool
+    description: str | None = None
+    course_id: int | None = None
+    course_code: str | None = None
+
+    @property
+    def short(self) -> str:
+        return _short(self.course_code, self.subject) or self.subject

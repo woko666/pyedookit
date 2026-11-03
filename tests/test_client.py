@@ -185,6 +185,8 @@ async def test_get_raises_connection_error_on_client_error():
 
 EVENTS_URL = f"https://{SCHOOL}.edookit.net/timetable/upcoming"
 PAYMENTS_URL = f"https://{SCHOOL}.edookit.net/payments/"
+EXAMS_URL = f"https://{SCHOOL}.edookit.net/exams/"
+ASSIGNMENTS_URL = f"https://{SCHOOL}.edookit.net/assignments/"
 FIXTURES = Path(__file__).parent / "fixtures"
 
 
@@ -201,6 +203,27 @@ async def test_get_events_parses_the_upcoming_page():
 
 
 @pytest.mark.asyncio
+async def test_get_exams_parses_the_exams_page():
+    body = (FIXTURES / "exams_structure.html").read_text()
+    client = EdookitClient(
+        SESSION, http=FakeClientSession([("GET", EXAMS_URL, ok(EXAMS_URL, body=body))])
+    )
+
+    assert [e.id for e in await client.get_exams()] == [9003, 9002, 9001]
+
+
+@pytest.mark.asyncio
+async def test_get_assignments_parses_the_assignments_page():
+    body = (FIXTURES / "assignments_structure.html").read_text()
+    client = EdookitClient(
+        SESSION,
+        http=FakeClientSession([("GET", ASSIGNMENTS_URL, ok(ASSIGNMENTS_URL, body=body))]),
+    )
+
+    assert [a.id for a in await client.get_assignments()] == [9101, 9102, 9103]
+
+
+@pytest.mark.asyncio
 async def test_get_payments_parses_the_payments_page():
     body = (FIXTURES / "payments_structure.html").read_text()
     client = EdookitClient(
@@ -214,12 +237,12 @@ async def test_get_payments_parses_the_payments_page():
 
 @pytest.mark.asyncio
 async def test_fetch_page_only_allows_capture_pages():
-    url = f"https://{SCHOOL}.edookit.net/assignments/"
+    url = f"https://{SCHOOL}.edookit.net/consents/"
     client = EdookitClient(
         SESSION, http=FakeClientSession([("GET", url, ok(url, body="<p>x</p>"))])
     )
 
-    assert await client.fetch_page("assignments") == "<p>x</p>"
+    assert await client.fetch_page("consents") == "<p>x</p>"
     with pytest.raises(ValueError):
         await client.fetch_page("settings")
 

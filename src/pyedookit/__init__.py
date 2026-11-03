@@ -9,7 +9,9 @@ from .exceptions import (
 )
 from .models import (
     PORTAL_TZ,
+    Assignment,
     BodyNode,
+    Exam,
     Grade,
     Grades,
     Lesson,
@@ -30,12 +32,14 @@ from .transport import CookieStore
 __all__ = [
     "CAPTURE_PAGES",
     "PORTAL_TZ",
+    "Assignment",
     "AuthError",
     "BodyNode",
     "CookieStore",
     "EdookitClient",
     "EdookitConnectionError",
     "EdookitError",
+    "Exam",
     "Grade",
     "Grades",
     "Lesson",

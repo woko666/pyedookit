@@ -45,6 +45,8 @@ asyncio.run(main())
 | `get_inbox()` | the `MessageSummary`s in Schránka, newest first: subject, sender, sent time, preview, `unread` |
 | `get_message(id)` | one `Message` in full; fetching it marks the message read on the portal |
 | `get_grades()` | `Grades` of the current term: `grades` newest first (mark, weight, topic, teacher, entered date), `subjects` with attendance, and `average(course_id)`, weighted |
+| `get_exams()` | the `Exam`s on Písemky, zkoušení (upcoming, today's and recent, in page order): subject, kind, start/end, title, description, who announced it and when, `unread` |
+| `get_assignments()` | the `Assignment`s (homework) on Domácí úkoly (today's, upcoming and recent, in page order): subject, `due`, title, description, who set it and when, `unread`, and `done` as marked on the portal |
 | `fetch_page(name)` | raw HTML of a page without a parser yet (`CAPTURE_PAGES`) |
 
 The inbox, message and grades pages are requested the way a browser's first page
@@ -101,6 +103,14 @@ hand, and a real jar would resend them.
   been seen. A mark other than 1–5 is kept as text and left out of
   `average()`; the current term is chosen by its heading ("2. pololetí" over
   "1. pololetí").
+- **Exams: only the main page is read.** Exams older than the "recent"
+  grid are only in the portal's archive, which isn't fetched. Only recent
+  exams have been seen; upcoming and today's are assumed to use the same
+  rows.
+- **Assignments: only the main page is read.** Homework older than the
+  "recent" grid is only in the portal's archive, which isn't fetched. A
+  filled today's grid, attachments and a deadline without a time (such a
+  row is skipped) haven't been seen.
 
 ## Development
 
