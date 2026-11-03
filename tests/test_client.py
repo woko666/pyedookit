@@ -453,3 +453,32 @@ async def test_overall_evaluation_is_a_capture_page():
     fake = FakeClientSession([("GET", OVERALL_URL, ok(OVERALL_URL, body="<p>x</p>"))])
 
     assert await EdookitClient(SESSION, http=fake).fetch_page("evaluation_overall") == "<p>x</p>"
+
+
+class _ParamsRecorder(FakeClientSession):
+    def __init__(self, routes, seen: list) -> None:
+        super().__init__(routes)
+        self._seen = seen
+
+    def request(self, method, url, **kwargs):
+        self._seen.append(kwargs.get("params"))
+        return super().request(method, url, **kwargs)
+
+
+@pytest.mark.asyncio
+async def test_another_week_is_reached_by_resetting_then_moving_by_days():
+    # The portal keeps the shown week in its session and moves it relative
+    # to wherever it is, so every fetch starts from the current week.
+    seen: list = []
+    fake = _ParamsRecorder(
+        [("GET", TIMETABLE_URL, ok(TIMETABLE_URL, body=body)) for body in ("now", "x", "next")],
+        seen,
+    )
+    client = EdookitClient(SESSION, http=fake)
+
+    assert await client.fetch_timetable_html() == "now"
+    assert await client.fetch_timetable_html(-2) == "next"
+
+    reset = {"do": "familyTimetable-resetFilter"}
+    move = {"familyTimetable-value": -14, "do": "familyTimetable-changeFilter"}
+    assert seen == [reset, reset, move]

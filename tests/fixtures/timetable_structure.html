@@ -5,13 +5,9 @@ lesson-info block, its fixed div order, the date_time spans, and the
 "Ucivo:" note prefix. Field values below (names, subjects, rooms,
 curriculum text) are placeholders; only the shape is authentic.
 
-The visible week grid itself is an absolutely-positioned canvas with no
-semantic day/time markup at all - parsing it wasn't attempted; these
-hidden per-lesson detail blocks are what parse_timetable() reads instead.
-
-Known gap: no cancelled/substituted lesson was ever observed in a real
-capture, so this fixture has none either, and is_changed/is_cancelled
-are untested and always False in the parser for now.
+It has no week-grid tiles, so it covers parse_timetable() falling back
+to the lesson-info block's own date/time field. Tiles, tooltips, cancelled
+lessons and events are in timetable_cancelled_structure.html.
 -->
 <div class="lesson-info" style="display:none" id="lesson-info-100001">
     <h3 class="attendance-heading">Informace o hodině</h3>

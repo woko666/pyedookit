@@ -38,8 +38,8 @@ asyncio.run(main())
 
 | Call | Returns |
 |---|---|
-| `get_timetable()` | this week's `Lesson`s, times in `PORTAL_TZ` (Europe/Prague) |
-| `get_timetable_week(week_offset=0)` | a `TimetableWeek`: `lessons` plus the bell-schedule `periods`; offset `1` is next week |
+| `get_timetable(week_offset=0)` | one week's `Lesson`s, times in `PORTAL_TZ` (Europe/Prague); `is_changed` for a substitution or other change, `is_cancelled` for a lesson that won't take place ("Zrušeno", or "Událost" when an event replaces it) |
+| `get_timetable_week(week_offset=0)` | a `TimetableWeek`: `lessons`, the bell-schedule `periods`, and the week's `events` (days off such as "Ředitelské volno", or timed ones, as `SchoolEvent`s, one per day as drawn, so a multi-day event repeats under the same `id`); offset `1` is next week, `-1` last week |
 | `get_events()` | upcoming `SchoolEvent`s; all-day events have `date` start/end, end inclusive |
 | `get_payments()` | `Payments` totals and requests, amounts as `Decimal` |
 | `get_inbox()` | the `MessageSummary`s in Schránka, newest first: subject, sender, sent time, preview, `unread` |
@@ -88,12 +88,13 @@ hand, and a real jar would resend them.
 
 ## Limitations
 
-- **Current week only.** The portal ignores `week_offset=1`, and the real
-  week-navigation parameter hasn't been found yet. A browser HAR trace of
-  clicking the next-week arrow would solve it; `scripts/capture_fixtures.py`
-  captures portal HTML.
-- **Cancelled and changed lessons are unverified.** No real capture has had
-  one yet, so `Lesson.is_changed` and `is_cancelled` are always `False`.
+- **Timetable changes carry no reason.** A changed lesson is recognised by
+  its orange border only; what changed (teacher, room, subject) has to be
+  read from its fields. A timed event spanning several days hasn't been
+  seen.
+- **Another week is two requests.** The portal stores the shown week in the
+  session and moves it relative to where it is, so `week_offset` other than
+  `0` first resets to the current week.
 - **Unpaid payment requests are unverified.** Only paid ones have been seen.
   A request without the "accepted" marker is reported as unpaid.
 - **Grades: term marks and non-numeric marks are unverified.** Neither has

@@ -3,11 +3,19 @@ from pathlib import Path
 
 import pytest
 
+from pyedookit.client import _parse_week
 from pyedookit.exceptions import ParseError
-from pyedookit.models import PORTAL_TZ, Period
-from pyedookit.parsers.timetable import parse_periods, parse_terms, parse_timetable
+from pyedookit.models import PORTAL_TZ, Period, SchoolEvent
+from pyedookit.parsers.timetable import (
+    parse_periods,
+    parse_terms,
+    parse_timetable,
+    parse_timetable_events,
+)
 
-FIXTURE = (Path(__file__).parent / "fixtures" / "timetable_structure.html").read_text()
+FIXTURES = Path(__file__).parent / "fixtures"
+FIXTURE = (FIXTURES / "timetable_structure.html").read_text()
+HOLIDAY_WEEK = (FIXTURES / "timetable_cancelled_structure.html").read_text()
 
 
 def test_parses_each_lesson_info_block_with_its_own_date():
@@ -120,3 +128,118 @@ def test_code_without_a_group_is_the_whole_field():
     """
     lessons = parse_timetable(html)
     assert lessons[0].code == "Čj" and lessons[0].group is None
+
+
+def _at(day: int, hour: int, minute: int) -> datetime:
+    return datetime(2026, 10, day, hour, minute, tzinfo=PORTAL_TZ)
+
+
+def test_lessons_take_date_and_time_from_their_tile():
+    # A cancelled lesson's lesson-info block has an empty date/time field.
+    lessons = parse_timetable(HOLIDAY_WEEK, today=date(2026, 10, 29))
+
+    assert [(ls.code, ls.start, ls.end) for ls in lessons] == [
+        ("Čj", _at(26, 8, 0), _at(26, 8, 45)),
+        ("Aj2", _at(26, 10, 0), _at(26, 10, 45)),
+        ("ŠD 4", _at(26, 12, 35), _at(26, 14, 0)),
+        ("Tv", _at(27, 8, 0), _at(27, 8, 45)),
+        ("M T", _at(27, 8, 55), _at(27, 9, 40)),
+        ("OSV", _at(27, 10, 0), _at(27, 10, 45)),
+    ]
+
+
+def test_cancelled_changed_and_regular_lessons():
+    lessons = parse_timetable(HOLIDAY_WEEK)
+
+    assert [(ls.code, ls.is_changed, ls.is_cancelled) for ls in lessons] == [
+        ("Čj", True, True),  # "Zrušeno"
+        ("Aj2", True, True),
+        ("ŠD 4", True, True),
+        ("Tv", False, False),
+        ("M T", True, False),  # substitute teacher: orange border only
+        ("OSV", True, True),  # "Událost": replaced by an event
+    ]
+
+
+def test_cancelled_lesson_keeps_its_details():
+    czech = parse_timetable(HOLIDAY_WEEK)[0]
+    assert czech.subject == "Český jazyk"
+    assert czech.teacher == "NOV, SVO (Novák J., Svobodová P.)"
+    assert czech.room == "1.A"
+    assert czech.group == "1.A"
+
+
+def test_changed_lesson_keeps_its_details():
+    maths = parse_timetable(HOLIDAY_WEEK)[4]
+    assert maths.teacher == "NOV, HOR (Novák J., Horáková E.)"
+    assert maths.note == "Násobilka - procvičení"
+
+
+def test_group_split_tolerates_no_space_before_the_dash():
+    english = parse_timetable(HOLIDAY_WEEK)[1]
+    assert (english.code, english.group) == ("Aj2", "1.A")
+
+
+def test_lesson_without_a_subject_name_falls_back_to_its_code():
+    assert parse_timetable(HOLIDAY_WEEK)[2].subject == "ŠD 4"
+
+
+def test_each_day_of_an_event_is_its_own_event():
+    assert parse_timetable_events(HOLIDAY_WEEK) == [
+        SchoolEvent(
+            id="3364",
+            title="Ředitelské volno",
+            start=date(2026, 10, 26),
+            end=date(2026, 10, 26),
+        ),
+        SchoolEvent(
+            id="3364",
+            title="Ředitelské volno",
+            start=date(2026, 10, 27),
+            end=date(2026, 10, 27),
+        ),
+        SchoolEvent(
+            id="3437",
+            title="Den převleků",
+            start=_at(27, 8, 0),
+            end=_at(27, 11, 59),
+        ),
+        SchoolEvent(
+            id="3362",
+            title="STÁTNÍ SVÁTEK - Den vzniku samostatného československého státu",
+            start=date(2026, 10, 28),
+            end=date(2026, 10, 28),
+        ),
+    ]
+
+
+def test_week_without_events_has_none():
+    assert parse_timetable_events(FIXTURE) == []
+
+
+def test_week_without_lessons_is_empty_not_an_error():
+    # Summer weeks render the grid with no lessons and no periods.
+    html = '<div class="timetable-container" id="tt1"><div class="lessonsBox"></div></div>'
+    assert parse_timetable(html) == []
+
+
+def test_timetable_week_carries_the_events():
+    week = _parse_week(HOLIDAY_WEEK)
+    assert len(week.lessons) == 6
+    assert [e.id for e in week.events] == ["3364", "3364", "3437", "3362"]
+
+
+def test_an_event_drawn_twice_on_a_day_is_kept_once():
+    tile = """
+    <div>
+      <a class="lesson event" href="/timetable/detail?event=7" id="{grid}boxId0">
+        <span data-day="2026_10_28" data-lesson-id=""></span>
+        <div class="row"><b>Svátek</b></div>
+      </a>
+      <div class="hoverLesson" id="{grid}longDesc0">
+        <b>Svátek</b><br>St 28. 10. 00:00&ndash;23:59
+      </div>
+    </div>
+    """
+    html = tile.format(grid="a") + tile.format(grid="b")
+    assert len(parse_timetable_events(html)) == 1

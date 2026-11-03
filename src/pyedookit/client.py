@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 
 import aiohttp
 
@@ -24,12 +24,18 @@ from .parsers.grades import parse_grade_listing, parse_subjects
 from .parsers.inbox import parse_inbox
 from .parsers.message import parse_message
 from .parsers.payments import parse_payments
-from .parsers.timetable import parse_periods, parse_terms, parse_timetable
+from .parsers.timetable import (
+    parse_periods,
+    parse_terms,
+    parse_timetable,
+    parse_timetable_events,
+)
 from .session import Session
 
 _LOGGER = logging.getLogger(__name__)
 
 _TIMETABLE_PATH = "/timetable/"
+_THIS_WEEK = {"do": "familyTimetable-resetFilter"}
 _EVENTS_PATH = "/timetable/upcoming"
 _PAYMENTS_PATH = "/payments/"
 _INBOX_PATH = "/overview/updates"
@@ -56,7 +62,7 @@ def _parse_week(html: str) -> TimetableWeek:
         if not periods:
             raise
         lessons = []
-    return TimetableWeek(lessons, periods)
+    return TimetableWeek(lessons, periods, parse_timetable_events(html))
 
 
 def _parse_grades(listing: str, subjects: str) -> Grades:
@@ -93,6 +99,7 @@ class EdookitClient:
         self._http = http
         self._on_session_update = on_session_update
         self._renew_lock = asyncio.Lock()
+        self._week_lock = asyncio.Lock()
 
     @property
     def session(self) -> Session:
@@ -112,8 +119,25 @@ class EdookitClient:
 
     async def fetch_timetable_html(self, week_offset: int = 0) -> str:
         """Raw `/timetable/` HTML for one week - also used by
-        scripts/capture_fixtures.py, so the request shape lives in one place."""
-        return await self._get(_TIMETABLE_PATH, params={"familyTimetable-value": week_offset})
+        scripts/capture_fixtures.py, so the request shape lives in one place.
+
+        The portal keeps the shown week in the server session and its arrows
+        move it by a number of days from wherever it is (confirmed), so each
+        fetch first resets it to the current week. Resetting is absolute, but
+        reset-then-move is not: the lock keeps two such fetches from
+        interleaving into a double move.
+        """
+        if week_offset == 0:
+            return await self._get(_TIMETABLE_PATH, params=_THIS_WEEK)
+        async with self._week_lock:
+            await self._get(_TIMETABLE_PATH, params=_THIS_WEEK)
+            return await self._get(
+                _TIMETABLE_PATH,
+                params={
+                    "familyTimetable-value": 7 * week_offset,
+                    "do": "familyTimetable-changeFilter",
+                },
+            )
 
     async def get_events(self) -> list[SchoolEvent]:
         return await asyncio.to_thread(parse_events, await self._get(_EVENTS_PATH))
@@ -145,7 +169,7 @@ class EdookitClient:
         return await self._get(path)
 
     async def _get(
-        self, path: str, params: dict[str, int] | None = None, *, ajax: bool = True
+        self, path: str, params: Mapping[str, str | int] | None = None, *, ajax: bool = True
     ) -> str:
         """GET a portal page, renewing the session once if it has expired.
 
@@ -170,7 +194,7 @@ class EdookitClient:
                 self._on_session_update(self._session)
 
     async def _fetch(
-        self, session: Session, path: str, params: dict[str, int] | None, ajax: bool
+        self, session: Session, path: str, params: Mapping[str, str | int] | None, ajax: bool
     ) -> str:
         headers = (
             {"X-CSRF-Token": session.csrf_token, "X-Requested-With": "XMLHttpRequest"}

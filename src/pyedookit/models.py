@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime, time
 from decimal import Decimal
 from typing import Any
@@ -36,6 +36,9 @@ class Period:
 class TimetableWeek:
     lessons: list[Lesson]
     periods: list[Period]
+    # Days off and other school events drawn across the week grid
+    # ("Ředitelské volno", "Podzimní prázdniny", ...).
+    events: list[SchoolEvent] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
