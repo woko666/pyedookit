@@ -23,6 +23,8 @@ class Lesson:
     is_cancelled: bool = False
     note: str | None = None
     code: str | None = None
+    # Whose timetable this is, from the heading of their section of the page.
+    student: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -55,6 +57,8 @@ class SchoolEvent:
     end: datetime | date
     description: str | None = None
     created_by: str | None = None
+    # Only set on events from the week grid, which is drawn per student.
+    student: str | None = None
 
     @property
     def all_day(self) -> bool:

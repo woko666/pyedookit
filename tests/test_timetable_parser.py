@@ -243,3 +243,50 @@ def test_an_event_drawn_twice_on_a_day_is_kept_once():
     """
     html = tile.format(grid="a") + tile.format(grid="b")
     assert len(parse_timetable_events(html)) == 1
+
+
+FAMILY = (FIXTURES / "timetable_family_structure.html").read_text()
+FIRST_STUDENT = "Jan Karel Novák"
+SECOND_STUDENT = "Eliška Nováková"
+
+
+def test_lessons_carry_the_student_from_their_sections_heading():
+    assert [(ls.student, ls.start) for ls in parse_timetable(FAMILY)] == [
+        (FIRST_STUDENT, datetime(2026, 10, 19, 8, 0, tzinfo=PORTAL_TZ)),
+        (SECOND_STUDENT, datetime(2026, 10, 19, 8, 55, tzinfo=PORTAL_TZ)),
+    ]
+
+
+def test_events_carry_the_student_and_a_shared_event_comes_back_for_each():
+    events = parse_timetable_events(FAMILY)
+    assert [(e.id, e.student) for e in events] == [
+        ("5001", FIRST_STUDENT),
+        ("5001", SECOND_STUDENT),
+        ("5002", FIRST_STUDENT),
+    ]
+
+
+def test_a_page_without_student_sections_has_no_student():
+    assert {ls.student for ls in parse_timetable(FIXTURE)} == {None}
+    assert {ls.student for ls in parse_timetable(HOLIDAY_WEEK)} == {None}
+    assert {e.student for e in parse_timetable_events(HOLIDAY_WEEK)} == {None}
+
+
+def test_a_section_without_its_own_heading_does_not_take_the_previous_one():
+    html = """
+    <h2 class="heading">Jan Novák <span class="class-name">1.A</span></h2>
+    <div id="snippet-familyTimetable-personTimetable-1"></div>
+    <div class="cleaner"></div>
+    <div id="snippet-familyTimetable-personTimetable-2">
+      <div class="lesson-info" id="lesson-info-1">
+        <div>Po 14.&thinsp;9.&thinsp;2026,
+          <span class="date_time">8:00</span>&ndash;<span class="date_time">8:45</span></div>
+        <div>Čj</div>
+      </div>
+    </div>
+    """
+    assert [ls.student for ls in parse_timetable(html)] == [None]
+
+
+def test_periods_merge_across_students():
+    assert [p.number for p in parse_periods(FAMILY)] == [1, 2]
